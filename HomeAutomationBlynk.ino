@@ -16,7 +16,9 @@ Blynk App.
 // #define BLYNK_ENABLED
 
 // Comment this out to disable prints
-// #define BLYNK_PRINT Serial
+#ifdef BLYNK_ENABLED
+#define BLYNK_PRINT Serial
+#endif
 
 #ifdef BLYNK_ENABLED
 #include <BlynkSimpleEthernet.h>
@@ -53,12 +55,12 @@ BLYNK_WRITE(COOLER_V_PIN) {
   // If cooler button is ON in blynk, turn on cooler
   if (cooler_sw) {
     cooler_control(ON);
-    lcd.setCursor(7, 0);
-    lcd.print("C_ON   ");
+    lcd.setCursor(8, 0);
+    lcd.print("C_ON");
   } else {
     cooler_control(OFF);
-    lcd.setCursor(7, 0);
-    lcd.print("C_OFF  ");
+    lcd.setCursor(8, 0);
+    lcd.print("C_OF");
   }
 }
 /*To turn ON and OFF heater based virtual PIN value*/
@@ -67,12 +69,12 @@ BLYNK_WRITE(HEATER_V_PIN) {
   // If heater button is ON in blynk, turn on heater
   if (heater_sw) {
     heater_control(ON);
-    lcd.setCursor(7, 0);
-    lcd.print("H_ON   ");
+    lcd.setCursor(8, 0);
+    lcd.print("H_ON");
   } else {
     heater_control(OFF);
-    lcd.setCursor(7, 0);
-    lcd.print("H_OFF  ");
+    lcd.setCursor(8, 0);
+    lcd.print("H_OF");
   }
 }
 /*To turn ON and OFF inlet vale based virtual PIN value*/
@@ -80,12 +82,12 @@ BLYNK_WRITE(INLET_V_PIN) {
   inlet_sw = param.asInt();
   if (inlet_sw) {
     enable_inlet();
-    lcd.setCursor(6, 1);
-    lcd.print("I_ON      ");
+    lcd.setCursor(8, 1);
+    lcd.print("I_ON");
   } else {
     disable_inlet();
-    lcd.setCursor(6, 1);
-    lcd.print("I_OFF     ");
+    lcd.setCursor(8, 1);
+    lcd.print("I_OF");
   }
 }
 
@@ -94,13 +96,22 @@ BLYNK_WRITE(OUTLET_V_PIN) {
   outlet_sw = param.asInt();
   if (outlet_sw) {
     enable_outlet();
-    lcd.setCursor(11, 1);
-    lcd.print("O_ON      ");
+    lcd.setCursor(12, 1);
+    lcd.print("O_ON");
   } else {
     disable_outlet();
-    lcd.setCursor(11, 1);
-    lcd.print("O_OFF     ");
+    lcd.setCursor(12, 1);
+    lcd.print("O_OF");
   }
+}
+
+// Syncing the initial state of the hardware with the Blynk App
+BLYNK_CONNECTED() {
+  Blynk.virtualWrite(COOLER_V_PIN, cooler_sw);
+  Blynk.virtualWrite(HEATER_V_PIN, heater_sw);
+  Blynk.virtualWrite(INLET_V_PIN, inlet_sw);
+  Blynk.virtualWrite(OUTLET_V_PIN, outlet_sw);
+  Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "System Connected to Blynk Cloud\n");
 }
 #endif
 #ifdef BLYNK_ENABLED
@@ -109,7 +120,8 @@ void update_temperature_reading() {
   // You can send any value at any time.
   // Please don't send more that 10 values per second.
   Blynk.virtualWrite(TEMPERATURE_GAUGE, read_temperature());
-  Blynk.virtualWrite(WATER_VOL_GAUGE, volume());
+  // Use the cached value from loop() to prevent serial port conflicts
+  Blynk.virtualWrite(WATER_VOL_GAUGE, tank_volume);
 }
 #endif
 
@@ -122,8 +134,8 @@ void handle_temp(void) {
     if (heater_sw) {
       heater_sw = 0;
       heater_control(OFF);
-      lcd.setCursor(7, 0);
-      lcd.print("H_OFF  ");
+      lcd.setCursor(8, 0);
+      lcd.print("H_OF");
 #ifdef BLYNK_ENABLED
       Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Temperature is above 35°C \n");
       Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Turning OFF the heater \n");
@@ -134,8 +146,8 @@ void handle_temp(void) {
     if (cooler_sw == OFF) {
       cooler_sw = ON;
       cooler_control(ON);
-      lcd.setCursor(7, 0);
-      lcd.print("C_ON   ");
+      lcd.setCursor(8, 0);
+      lcd.print("C_ON");
 #ifdef BLYNK_ENABLED
       Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Turning ON the cooler \n");
       Blynk.virtualWrite(COOLER_V_PIN, ON);
@@ -147,8 +159,8 @@ void handle_temp(void) {
     if (cooler_sw == ON) {
       cooler_sw = OFF;
       cooler_control(OFF);
-      lcd.setCursor(7, 0);
-      lcd.print("C_OFF  ");
+      lcd.setCursor(8, 0);
+      lcd.print("C_OF");
 #ifdef BLYNK_ENABLED
       Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Turning OFF the cooler \n");
       Blynk.virtualWrite(COOLER_V_PIN, OFF);
@@ -161,8 +173,8 @@ void handle_temp(void) {
 void handle_tank(void) {
   if ((tank_volume < 2000) && (inlet_sw == OFF)) {
     enable_inlet();
-    lcd.setCursor(6, 1);
-    lcd.print("I_ON      ");
+    lcd.setCursor(8, 1);
+    lcd.print("I_ON");
     inlet_sw = ON;
 
     // To reflect ON on inlet virtual pin
@@ -178,8 +190,8 @@ void handle_tank(void) {
   // Checking if tank volume is full, then turn OFF the inlet valve
   if ((tank_volume == 3000) && (inlet_sw == ON)) {
     disable_inlet();
-    lcd.setCursor(6, 1);
-    lcd.print("I_OFF     ");
+    lcd.setCursor(8, 1);
+    lcd.print("I_OF");
     inlet_sw = OFF;
 
     // To reflect ON on inlet virtual pin
@@ -188,6 +200,25 @@ void handle_tank(void) {
 
     Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Water volume is FULL \n");
     Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Turning OFF the inlet valve \n");
+#endif
+  }
+
+  // Handle Outlet Local Override (Switch 1 on Pin 2)
+  // LOW = Pressed/ON (using INPUT_PULLUP)
+  bool sw1_state = (digitalRead(SW1_OUTLET_PIN) == LOW);
+  if (sw1_state != outlet_sw) {
+    outlet_sw = sw1_state;
+    if (outlet_sw) {
+      enable_outlet();
+      lcd.setCursor(12, 1);
+      lcd.print("O_ON");
+    } else {
+      disable_outlet();
+      lcd.setCursor(12, 1);
+      lcd.print("O_OF");
+    }
+#ifdef BLYNK_ENABLED
+    Blynk.virtualWrite(OUTLET_V_PIN, outlet_sw);
 #endif
   }
 }
@@ -209,6 +240,8 @@ void setup(void) {
   init_temperature_system();
 
   init_serial_tank();
+
+  pinMode(SW1_OUTLET_PIN, INPUT_PULLUP);
 
 #ifdef BLYNK_ENABLED
   // For updating the timer on Blynk app for every 0.5 sec
@@ -259,6 +292,12 @@ void setup(void) {
   Blynk.connect();
 #endif
 
+  // Initializing switch states to OFF
+  heater_sw = OFF;
+  cooler_sw = OFF;
+  inlet_sw = OFF;
+  outlet_sw = OFF;
+
   lcd.clear();
   lcd.setCursor(0, 0);
   lcd.print("T=");
@@ -266,23 +305,37 @@ void setup(void) {
   // Set cursor to 2nd line
   lcd.setCursor(0, 1);
   lcd.print("V=");
+
+  // Display initial status on LCD
+  lcd.setCursor(8, 0);
+  lcd.print("H_OF");
+  lcd.setCursor(8, 1);
+  lcd.print("I_OF");
+  lcd.setCursor(12, 1);
+  lcd.print("O_OF");
 }
 
 void loop(void) {
   // control brightness of garden lights using LDR sensor
   brightness_control();
 
-  lcd.setCursor(2, 0);
-
-  String temp;
-  temp = String(read_temperature(), 2);
-
   // For displaying the temperature on CLCD
-  lcd.print(temp + "  ");
+  lcd.setCursor(2, 0);
+  String temp = String(read_temperature(), 1);
+  lcd.print(temp);
+  // Pad with spaces to reach index 7
+  for (int i = temp.length(); i < 5; i++) {
+    lcd.print(" ");
+  }
 
   tank_volume = volume();
   lcd.setCursor(2, 1);
-  lcd.print(String(tank_volume) + " ");
+  String vol = String(tank_volume);
+  lcd.print(vol);
+  // Pad with spaces to reach index 7
+  for (int i = vol.length(); i < 5; i++) {
+    lcd.print(" ");
+  }
 
   // To check threshold temp and controlling heater
   handle_temp();
