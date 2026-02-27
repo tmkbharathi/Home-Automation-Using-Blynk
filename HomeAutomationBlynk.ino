@@ -168,16 +168,12 @@ void setup(void) {
   // initialising temp system
   init_temperature_system();
 
-  lcd.setCursor(0, 0);
-  lcd.print("T=");
-
-  // Set cursor to 2nd line
-  lcd.setCursor(0, 1);
-  lcd.print("V=");
   init_serial_tank();
 
   // For updating the timer on Blynk app for every 0.5 sec
   timer.setInterval(500L, update_temperature_reading);
+
+  lcd.clear();
 
   lcd.setCursor(0, 0);
   lcd.print("Connecting...");
