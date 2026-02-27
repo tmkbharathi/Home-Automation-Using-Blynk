@@ -14,23 +14,45 @@ To run this project in simulation, you need to configure PicSimLab with the corr
 3. **Configure the Spare Parts Window**:
    Open `Modules -> Spare Parts` and add the following components. Wire them exactly as listed below:
    
-   - **LDR Sensor**: Connect to Analog Pin **A1** (for Garden light brightness control).
+   - **LDR Sensor (Light)**: Connect `A0` on the sensor to Analog Pin **A1** (for Garden light brightness control). *Leave D0 and Vth blank.*
    - **LED (Garden Light)**: Connect to Digital Pin **3** (PWM pin to control brightness).
-   - **Temperature System**: 
+   - **Temperature System (or LM35)**: 
       - Heater: Connect to Digital Pin **5**.
       - Cooler: Connect to Digital Pin **4**.
-      - Temperature Sensor (LM35): Connect to Analog Pin **A0**.
-   - **Serial Tank**: This is handled via Serial communication (UART). No external pins need to be wired except ensuring standard TX/RX is active if required by the PIC simulator module.
+      - Temperature Sensor (`Vout` or LM35): Connect to Analog Pin **A0**.
+   - **Serial Tank**: This is handled via Serial communication (UART). No external pins need to be wired.
    - **LCD 16x2 (I2C)**: Connect to the I2C pins.
       - SDA: **A4**
       - SCL: **A5**
+      - *Note: Leave A0, A1, and A2 pins on the LCD blank (they default to address 0x27).*
+   - **Ethernet Options**:
+      - **Easy Way:** Add `Shield Ethernet W5500` from the Shields menu (no wiring needed).
+      - **Manual Way:** Add `Ethernet W5500` from the standard list and wire `CS` -> 10, `MOSI` -> 11, `MISO` -> 12, `SCK` -> 13.
 
-4. **Connect to the Internet (Blynk Cloud)**: PicSimLab simulation needs to connect to the actual internet to communicate with the Blynk server.
-   - Go to `Modules -> Serial Terminal` or `Options -> Network` in PicSimLab.
-   - You need a virtual serial port pair (like **com0com** on Windows or `socat` on Linux).
-   - Configure PicSimLab’s Arduino UNO **Serial** port to the first virtual COM port (e.g., `COM1`).
-   - Run a python bridge or the provided **Blynk script** (`blynk-ser.bat` or `blynk-ser.sh` usually found in the Blynk library's `scripts` folder) on the second virtual COM port (e.g., `COM2`).
-   - *Example Command*: `blynk-ser.bat -c COM2` - This command bridges the serial data from the simulator to the Blynk cloud via your computer's internet connection.
+### 4. Setting up the Serial Tank (Virtual Serial Port)
+
+The Serial Tank simulator requires a "virtual serial cable" to connect the Arduino (in PicSimLab) to the Tank UI.
+
+1. **Install a Virtual COM Port Emulator**: Download and install a free tool like **com0com** or **Virtual Serial Port Emulator (VSPE)** on your Windows machine.
+2. **Create a Port Pair**: Use the tool to create a linked pair of virtual COM ports (e.g., `COM1` and `COM2`).
+3. **Configure PicSimLab (Arduino)**:
+   - In the main PicSimLab window, go to `Options -> Serial`.
+   - Set the Port to the first half of your pair (e.g., `COM1`).
+   - Set the Baud Rate to `19200` (8N1).
+4. **Configure the Serial Tank UI**:
+   - In the Spare Parts window, go to `File -> Load` and select `Serial Tank`.
+   - In the Serial Tank's settings, set its Port to the other half of your pair (e.g., `COM2`).
+   - Set its Baud Rate to `19200`.
+
+### 5. Connect to the Internet (Blynk Cloud)
+PicSimLab simulation needs to bridge to your computer's actual internet to communicate with the Blynk server.
+   - **Windows Users:** You must install [Npcap](https://npcap.com/) or WinPcap for this to work.
+   - Go to `Options -> Ethernet` (or Network) in PicSimLab.
+   - In the **Interface** dropdown, select your host computer's active network adapter (e.g., your actual physical Wi-Fi or Ethernet card). 
+   - Ensure the MAC Address matches what is in the code (default is `DE:AD:BE:EF:FE:ED`).
+   - The code will attempt to connect via DHCP first. If DHCP fails, it falls back to a static IP (`192.168.1.100`).
+
+*(Note: The old method of using a Python script/bridge on a COM port is no longer required with the W5500 direct Ethernet simulation).*
 
 ---
 

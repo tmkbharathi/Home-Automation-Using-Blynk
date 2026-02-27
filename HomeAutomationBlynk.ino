@@ -13,7 +13,7 @@ Blynk App.
 #define BLYNK_AUTH_TOKEN "Ach5e5z58XEAvlNsgshrWII59pAFPnYy"
 
 // Comment this out to disable prints
-#define BLYNK_PRINT Serial
+// #define BLYNK_PRINT Serial
 
 #include <BlynkSimpleEthernet.h>
 #include <Ethernet.h>
@@ -47,11 +47,11 @@ BLYNK_WRITE(COOLER_V_PIN) {
   if (value) {
     cooler_control(ON);
     lcd.setCursor(7, 0);
-    lcd.print("CO_LR ON  ");
+    lcd.print("C_ON   ");
   } else {
     cooler_control(OFF);
     lcd.setCursor(7, 0);
-    lcd.print("CO_LR OFF ");
+    lcd.print("C_OFF  ");
   }
 }
 /*To turn ON and OFF heater based virtual PIN value*/
@@ -61,11 +61,11 @@ BLYNK_WRITE(HEATER_V_PIN) {
   if (heater_sw) {
     heater_control(ON);
     lcd.setCursor(7, 0);
-    lcd.print("HT_R ON  ");
+    lcd.print("H_ON   ");
   } else {
     heater_control(OFF);
     lcd.setCursor(7, 0);
-    lcd.print("HT_R OFF ");
+    lcd.print("H_OFF  ");
   }
 }
 /*To turn ON and OFF inlet vale based virtual PIN value*/
@@ -111,7 +111,7 @@ void handle_temp(void) {
     heater_control(OFF);
 
     lcd.setCursor(7, 0);
-    lcd.print("HT_R OFF ");
+    lcd.print("H_OFF  ");
 
     Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Temperature is above 35°C \n");
     Blynk.virtualWrite(BLYNK_TERMINAL_V_PIN, "Turning OFF the heater \n");
