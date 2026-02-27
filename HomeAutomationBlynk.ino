@@ -10,7 +10,7 @@ Blynk App.
 // See the Device Info tab, or Template settings
 #define BLYNK_TEMPLATE_ID "TMPL3YixHkYcj"
 #define BLYNK_TEMPLATE_NAME "Home automation"
-#define BLYNK_AUTH_TOKEN "rK02z3ShzrhHAiUu2oKRmjPdL4bAnmhe"
+#define BLYNK_AUTH_TOKEN "Ach5e5z58XEAvlNsgshrWII59pAFPnYy"
 
 // Comment this out to disable prints
 #define BLYNK_PRINT Serial
@@ -29,6 +29,9 @@ Blynk App.
 char auth[] = BLYNK_AUTH_TOKEN;
 bool heater_sw, inlet_sw, outlet_sw;
 unsigned int tank_volume;
+
+// Mac address should be different for each device in your LAN
+byte mac[] = {0xDE, 0xAD, 0xBE, 0xEF, 0xFE, 0xED};
 
 BlynkTimer timer;
 
@@ -176,8 +179,51 @@ void setup(void) {
   // For updating the timer on Blynk app for every 0.5 sec
   timer.setInterval(500L, update_temperature_reading);
 
+  lcd.setCursor(0, 0);
+  lcd.print("Connecting...");
+
+  // Specifically map W5500 Ethernet CS pin to 10 for Arduino Uno
+  Ethernet.init(10);
+
+  // Define Network Fallbacks
+  IPAddress ip_eth(192, 168, 1, 100);
+  IPAddress gateway(192, 168, 1, 1);
+  IPAddress dns(8, 8, 8, 8); // Google DNS
+  IPAddress subnet(255, 255, 255, 0);
+
+  // Try DHCP first
+  if (Ethernet.begin(mac) == 0) {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("DHCP Failed");
+    delay(1000);
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("Static IP...");
+    // Static Backup with routing info
+    Ethernet.begin(mac, ip_eth, dns, gateway, subnet);
+  } else {
+    lcd.clear();
+    lcd.setCursor(0, 0);
+    lcd.print("DHCP Success");
+  }
+  delay(1000);
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("Blynk init...");
+
   // connecting arduino to blynk server
-  Blynk.begin(auth);
+  Blynk.config(auth, "blynk.cloud", 80);
+  Blynk.connect();
+
+  lcd.clear();
+  lcd.setCursor(0, 0);
+  lcd.print("T=");
+
+  // Set cursor to 2nd line
+  lcd.setCursor(0, 1);
+  lcd.print("V=");
 }
 
 void loop(void) {
